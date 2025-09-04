@@ -11,3 +11,9 @@ I have been given a PDF file with the items that qualify for cash back and the r
 
 - Need to find a solution for the user to either print the rebate form immediately, or possibly emailed to them to print at a later date. 
     - Potentially using SMTP Mailer system
+
+
+## Requirements
+- This popup/feature needs to be written in Liquid Template Language (Shopify)
+- Send email and/or allow the user to download the rebate form either before or after the user makes a purchase.
+- Follow the wireframe given via PDF from retailer or go a custom route
