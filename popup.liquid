@@ -1,16 +1,25 @@
 {% capture current_date %}{{ 'now' | date: '%s' }}{% endcapture %}
-{% capture start_date %}{{ '2025-09-15' | date: '%s' }}{% endcapture %}
+{% capture start_date %}{{ '2025-09-10' | date: '%s' }}{% endcapture %}
 {% capture end_date %}{{ '2025-11-15' | date: '%s' | plus: 86399 }}{% endcapture %}
 
 {% if current_date >= start_date and current_date <= end_date %}
-  <div id="rebateModal" class="modal" style="display: none;">
+  <div id="rebateModal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="document.getElementById('rebateModal').style.display='none'">&times;</span>
-      <h2>Superwinch Cash Back Rebate!</h2>
-      <p>From September 15 to November 15, 2025, get cash back on select Superwinch items.</p>
-      
+      <span class="close">&times;</span>
+      <img
+        class="header-logo-image"
+        src="https://cdn11.bigcommerce.com/s-c3z4vlowih/images/stencil/250x38/superwinch-logo-white_1724284008__21336.original.png"
+        srcset="https://cdn11.bigcommerce.com/s-c3z4vlowih/images/stencil/250x38/superwinch-logo-white_1724284008__21336.original.png"
+        alt="Superwinch"
+        title="Superwinch"
+      >
+      <h2 id="color-change">Cash Back Rebate!</h2>
+      <p class="secondary">
+        From September 15 to November 15, 2025, get up to $100 cash back on select Superwinch items.
+      </p>
+
       <!-- Carousel of qualifying items -->
-      <h3>Qualifying Items:</h3>
+      <h3 id="color-change">Qualifying Items:</h3>
       <div class="rebate-carousel">
         {% for product in collections['superwinch-rebate-2025'].products %}
           <div class="carousel-item">
@@ -19,87 +28,212 @@
               <p>{{ product.title }}</p>
             </a>
           </div>
+        {% else %}
+          <p>No qualifying items available.</p>
         {% endfor %}
       </div>
-      
+
       <!-- Rebate form options -->
-      <h3>Get Your Rebate Form:</h3>
-      <p>
-        <a href="{{ 'rebate-form.pdf' | file_url }}" download>Download PDF</a>
-      </p>
-      <p>
-        <button onclick="window.open('{{ 'rebate-form.pdf' | file_url }}', '_blank')">Print PDF</button>
-      </p>
-      <form id="emailRebateForm" onsubmit="sendEmail(event)">
-        <input type="email" id="userEmail" placeholder="Enter your email" required>
-        <button type="submit">Email PDF to Me</button>
-      </form>
+      <!-- Rebate form options -->
+      <div class="rebate-form-container">
+        <h3 id="color-change">Get Your Rebate Form:</h3>
+        <div class="button-group">
+          <button class="btn" onclick="window.open('{{ 'Superwinch-rebate-form.pdf' | file_url }}', '_blank')">
+            View PDF
+          </button>
+          <form id="emailRebateForm" onsubmit="sendEmail(event)" class="rebate-form">
+            <input type="email" id="userEmail" placeholder="Enter your email" required>
+            <button type="submit" class="btn">Email PDF to Me</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Inline CSS for modal and carousel -->
   <style>
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
-    }
+        #rebateModal.modal {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 10000;
+          display: none;
+        }
 
-    .modal-content {
-      background-color: #fff;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      max-width: 600px;
+
+        .header-logo-image {
+        display: block;
+        margin: 0 auto;
+        max-height: 2.35714rem;
+        }
+
+        .secondary {
+            color: RGB(255, 204, 102)
+
+        }
+
+        .btn {
+            background-color: RGB(255, 204, 102);
+            font-size: 24px;
+            margin: 0px;
+        }
+
+        #color-change {
+            margin-top: 8px;
+            margin-bottom: 0px;
+            color: #fff
+        }
+
+        .modal-content {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: rgb(7, 64, 151);
+          padding: 20px;
+          border: 1px solid #888;
+          width: 80%;
+          max-width: 800px; /* Increased from 600px to 800px for more arrow space */
+          max-height: 80vh;
+          overflow: visible; /* Prevent clipping of arrows */
+          text-align: center;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          border-radius: 8px;
+        }
+
+        .rebate-form-container {
+      margin: 20px 0; /* Adds spacing above and below the section */
       text-align: center;
     }
 
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px; /* Space between buttons */
+      justify-content: center; /* Center buttons horizontally */
+      align-items: center; /* Align items vertically */
     }
 
-    .close:hover {
-      color: black;
+    .rebate-form {
+      display: flex;
+      gap: 10px; /* Space between input and button */
+      align-items: center; /* Align input and button vertically */
+      margin: 0; /* Remove default form margin */
+    }
+
+    .rebate-form input {
+      padding: 8px;
+      font-size: 16px; /* Match button font size for consistency */
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .btn {
+      background-color: RGB(255, 204, 102);
+      font-size: 16px; /* Reduced from 24px for better proportionality */
+      padding: 8px 16px; /* Add padding for better button appearance */
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
-    .rebate-carousel {
-      margin: 20px 0;
+    .btn:hover {
+      background-color: RGB(230, 184, 92); /* Slightly darker on hover */
     }
 
-    .carousel-item {
-      text-align: center;
-      padding: 10px;
-    }
+        .close {
+          color: #aaa;
+          position: absolute;
+          top: 10px;
+          right: 15px;
+          font-size: 28px;
+          font-weight: bold;
+          cursor: pointer;
+        }
 
-    .carousel-item img {
-      max-width: 200px;
-    }
+        .close:hover {
+          color: black;
+        }
+
+        .rebate-carousel {
+
+          margin: 20px
+          position: relative; /* Ensure carousel is a positioning context for arrows */
+        }
+
+        .carousel-item {
+            background-color: #fff
+          text-align: center;
+          padding: 10px;
+        }
+
+        .carousel-item img {
+          max-width: 200px;
+        }
+
+        .slick-track {
+          opacity: 1 !important;
+        }
+
+        /* Style for the arrows */
+        .slick-prev, .slick-next {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 48px;
+          color: #333;
+          background: none;
+          border: none;
+          cursor: pointer;
+          z-index: 1;
+          padding: 10px;
+          line-height: 1;
+        }
+
+        .slick-prev:hover, .slick-next:hover {
+          color: #000;
+        }
+
+        .slick-prev {
+          left: -24px; /* Positioned outside the carousel */
+        }
+
+        .slick-next {
+          right: -24px; /* Positioned outside the carousel */
+        }
   </style>
 
-  <!-- Inline JavaScript for popup and carousel -->
+  <!-- Inline JavaScript -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var modal = document.getElementById('rebateModal');
-      if (modal) {
-        modal.style.display = 'block';
-        
-        // Initialize Slick carousel
+      var closeBtn = modal.querySelector('.close');
+
+      // open on load
+      modal.style.display = 'block';
+
+      // close on X
+      closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+      });
+
+      // close if clicked outside modal-content
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // init slick
+      try {
         $('.rebate-carousel').slick({
           slidesToShow: 3,
           slidesToScroll: 1,
           autoplay: true,
           autoplaySpeed: 3000,
+          prevArrow: '<button type="button" class="slick-prev"><</button>',
+          nextArrow: '<button type="button" class="slick-next">></button>',
           responsive: [
             {
               breakpoint: 768,
@@ -109,13 +243,15 @@
             }
           ]
         });
+      } catch (e) {
+        console.error('Slick initialization failed:', e);
       }
     });
 
     function sendEmail(event) {
       event.preventDefault();
       var email = document.getElementById('userEmail').value;
-      var pdfUrl = '{{ 'rebate-form.pdf' | file_url }}';
+      var pdfUrl = '{{ 'Superwinch-rebate-form.pdf' | file_url }}';
       var subject = 'Superwinch Rebate Form';
       var body = 'Download your rebate form here: ' + pdfUrl + '\n\nPrint and complete it to claim your cash back.';
       window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
