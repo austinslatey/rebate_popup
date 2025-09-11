@@ -1,0 +1,124 @@
+{% capture current_date %}{{ 'now' | date: '%s' }}{% endcapture %}
+{% capture start_date %}{{ '2025-09-15' | date: '%s' }}{% endcapture %}
+{% capture end_date %}{{ '2025-11-15' | date: '%s' | plus: 86399 }}{% endcapture %}
+
+{% if current_date >= start_date and current_date <= end_date %}
+  <div id="rebateModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="document.getElementById('rebateModal').style.display='none'">&times;</span>
+      <h2>Superwinch Cash Back Rebate!</h2>
+      <p>From September 15 to November 15, 2025, get cash back on select Superwinch items.</p>
+      
+      <!-- Carousel of qualifying items -->
+      <h3>Qualifying Items:</h3>
+      <div class="rebate-carousel">
+        {% for product in collections['superwinch-rebate-2025'].products %}
+          <div class="carousel-item">
+            <a href="{{ product.url }}">
+              <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title | escape }}">
+              <p>{{ product.title }}</p>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+      
+      <!-- Rebate form options -->
+      <h3>Get Your Rebate Form:</h3>
+      <p>
+        <a href="{{ 'rebate-form.pdf' | file_url }}" download>Download PDF</a>
+      </p>
+      <p>
+        <button onclick="window.open('{{ 'rebate-form.pdf' | file_url }}', '_blank')">Print PDF</button>
+      </p>
+      <form id="emailRebateForm" onsubmit="sendEmail(event)">
+        <input type="email" id="userEmail" placeholder="Enter your email" required>
+        <button type="submit">Email PDF to Me</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inline CSS for modal and carousel -->
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover {
+      color: black;
+      cursor: pointer;
+    }
+
+    .rebate-carousel {
+      margin: 20px 0;
+    }
+
+    .carousel-item {
+      text-align: center;
+      padding: 10px;
+    }
+
+    .carousel-item img {
+      max-width: 200px;
+    }
+  </style>
+
+  <!-- Inline JavaScript for popup and carousel -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var modal = document.getElementById('rebateModal');
+      if (modal) {
+        modal.style.display = 'block';
+        
+        // Initialize Slick carousel
+        $('.rebate-carousel').slick({
+          slidesToShow: 3,
+          slidesToScroll: 1,
+          autoplay: true,
+          autoplaySpeed: 3000,
+          responsive: [
+            {
+              breakpoint: 768,
+              settings: {
+                slidesToShow: 1
+              }
+            }
+          ]
+        });
+      }
+    });
+
+    function sendEmail(event) {
+      event.preventDefault();
+      var email = document.getElementById('userEmail').value;
+      var pdfUrl = '{{ 'rebate-form.pdf' | file_url }}';
+      var subject = 'Superwinch Rebate Form';
+      var body = 'Download your rebate form here: ' + pdfUrl + '\n\nPrint and complete it to claim your cash back.';
+      window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    }
+  </script>
+{% endif %}
