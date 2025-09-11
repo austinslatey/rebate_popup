@@ -1,0 +1,4 @@
+{% comment %} ADD TO <head> OF theme.liquid IF NOT EXISTS {% endcomment %}
+{{ 'slick.css' | asset_url | stylesheet_tag }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Slick requires jQuery -->
+{{ 'slick.min.js' | asset_url | script_tag }}
