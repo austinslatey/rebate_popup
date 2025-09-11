@@ -1,0 +1,3 @@
+{% if order.line_items | where: 'collection', 'rebate-items' %}
+  <p>Claim your cash back! Download the rebate form: <a href="{{ 'rebate-form.pdf' | file_url }}">Rebate Form PDF</a></p>
+{% endif %}
