@@ -14,7 +14,11 @@
   {% assign is_rebate_product = true %}
 {% endif %}
 
-{% if current_date >= start_date and current_date <= end_date and is_excluded_page == false and is_rebate_product == false %}
+{% if current_date >= start_date
+  and current_date <= end_date
+  and is_excluded_page == false
+  and is_rebate_product == false
+%}
   <div id="rebateModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -279,7 +283,7 @@
 
   <!-- Inline JavaScript -->
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       var modal = document.getElementById('rebateModal');
       var closeBtn = modal.querySelector('.close');
 
@@ -295,12 +299,12 @@
       }
 
       // Close on X
-      closeBtn.addEventListener('click', function() {
+      closeBtn.addEventListener('click', function () {
         modal.style.display = 'none';
       });
 
       // Close if clicked outside modal-content
-      modal.addEventListener('click', function(e) {
+      modal.addEventListener('click', function (e) {
         if (e.target === modal) {
           modal.style.display = 'none';
         }
@@ -319,23 +323,40 @@
             {
               breakpoint: 768,
               settings: {
-                slidesToShow: 1
-              }
-            }
-          ]
+                slidesToShow: 1,
+              },
+            },
+          ],
         });
       } catch (e) {
         console.error('Slick initialization failed:', e);
       }
     });
 
-    function sendEmail(event) {
+    async function sendEmail(event) {
       event.preventDefault();
+
       var email = document.getElementById('userEmail').value;
-      var pdfUrl = '{{ 'Superwinch-rebate-form.pdf' | file_url }}';
-      var subject = 'Superwinch Rebate Form';
-      var body = 'Download your rebate form here: ' + pdfUrl + '\n\nPrint and complete it to claim your cash back.';
-      window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+      var pdfUrl = '{{ "Superwinch-rebate-form.pdf" | file_url }}';
+
+      try {
+        const response = await fetch('https://rebate-popup.onrender.com/api/send-rebate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, pdfUrl }),
+        });
+
+        if (response.ok) {
+          alert('✅ Rebate form sent to your email!');
+          document.getElementById('userEmail').value = ''; // clear input
+        } else {
+          alert('⚠️ Failed to send rebate form. Please try again.');
+        }
+      } catch (err) {
+        console.error('Error sending rebate email:', err);
+        alert('❌ Something went wrong. Please try again later.');
+      }
     }
   </script>
 {% endif %}
+%} }}}
