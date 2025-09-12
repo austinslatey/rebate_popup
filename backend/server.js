@@ -31,11 +31,11 @@ app.post("/api/send-rebate", async (req, res) => {
         });
 
         await transporter.sendMail({
-            from: `"Superwinch Rebates" <${process.env.EMAIL_USER}>`,
+            from: `"Superwinch Rebates" <${process.env.EMAIL_FROM}>`,
             to: email,
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
-             <p>Print and complete it to claim your cash back.</p>`,
+         <p>Print and complete it to claim your cash back.</p>`,
         });
 
         res.json({ success: true });
