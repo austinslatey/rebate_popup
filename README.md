@@ -1,3 +1,18 @@
+# Superwinch Rebate Popup & Dynamic Pricing (Shopify Integration)
+
+This project adds a **rebate marketing system** to your Shopify store.  
+It includes:
+
+- A **popup modal** that appears during an active rebate period.
+- A **carousel of qualifying products** pulled from a dedicated collection.
+- **Dynamic rebate pricing** displayed on product and collection pages.
+- **Rebate form delivery options**:
+  - Download PDF
+  - Print PDF
+  - Email form link via backend API (SendGrid + Shopify customer creation/update)
+
+---
+
 # Table of Contents
 
 - [Superwinch Rebate Popup & Dynamic Pricing (Shopify Integration)](#superwinch-rebate-popup--dynamic-pricing-shopify-integration)
@@ -20,21 +35,6 @@
     - [Optional Enhancements](#optional-enhancements)
     - [Notes](#notes)
 
-# Superwinch Rebate Popup & Dynamic Pricing (Shopify Integration)
-
-This project adds a **rebate marketing system** to your Shopify store.  
-It includes:
-
-- A **popup modal** that appears during an active rebate period.
-- A **carousel of qualifying products** pulled from a dedicated collection.
-- **Dynamic rebate pricing** displayed on product and collection pages.
-- **Rebate form delivery options**:
-  - Download PDF
-  - Print PDF
-  - Email form link via backend API (SendGrid + Shopify customer creation/update)
-
----
-
 ## Features
 
 ### Popup Modal
@@ -42,14 +42,14 @@ It includes:
 - Displays products from the `superwinch-rebate-2025` collection.
 - Provides download, print, and email options for the rebate form.
 
-<img src="./assets/read_only/images/modal.jpg" alt="Modal" width="400">
+<img src="./assets/images/modal.jpg" alt="Modal" width="400">
 
 ### Dynamic Rebate Pricing
 - Collection and product pages show cash back amount.
 
-<img src="./assets/read_only/images/collection.jpg" alt="Collection" width="400">
+<img src="./assets/images/collection.jpg" alt="Collection" width="400">
 
-<img src="./assets/read_only/images/product.jpg" alt="Product" width="400">
+<img src="./assets/images/product.jpg" alt="Product" width="400">
 
 
 ### Email Backend
@@ -59,7 +59,7 @@ It includes:
   - Creates new customer with `rebate` tag.
   - If customer already exists, updates their tags instead of failing.
 
-  <img src="./assets/read_only/images/email.jpg" alt="Email" width="400">
+  <img src="./assets/images/email.jpg" alt="Email" width="400">
 
 ### Date Logic
 - Popup and rebate display are only active between:
