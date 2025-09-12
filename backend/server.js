@@ -2,18 +2,17 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import nodemailer from "nodemailer";
-import fetch from "node-fetch"; // native fetch works in Node 18+, but safe to import
+import fetch from "node-fetch"; // optional if using Node 18+
 
 dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: "*", // you can restrict to your Shopify domain
+    origin: "*", // restrict to Shopify domain if needed
     methods: ["GET", "POST"],
 }));
 app.use(express.json());
 
-// Send rebate email + create Shopify customer
 app.post("/api/send-rebate", async (req, res) => {
     const { email, pdfUrl } = req.body;
 
@@ -21,15 +20,19 @@ app.post("/api/send-rebate", async (req, res) => {
         return res.status(400).json({ error: "Missing email or pdfUrl" });
     }
 
+    let emailSent = false;
+    let shopifySuccess = false;
+    let shopifyResponseData = null;
+
+    // 1️⃣ Send rebate email
     try {
-        // === 1️⃣ Send rebate email ===
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: parseInt(process.env.SMTP_PORT, 10),
             secure: false, // true for 465, false for 587
             auth: {
-                user: process.env.EMAIL_USER, // 'apikey'
-                pass: process.env.EMAIL_PASS, // SendGrid API key
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
             },
         });
 
@@ -38,15 +41,21 @@ app.post("/api/send-rebate", async (req, res) => {
             to: email,
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
-             <p>Print and complete it to claim your cash back.</p>
-             <p style="margin-top: 20px; text-align: center;">
-                <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png" 
-                    alt="Waldoch Logo" 
-                    style="max-width: 200px; height: auto;">
-            </p>`,
+                   <p>Print and complete it to claim your cash back.</p>
+                   <p style="margin-top:20px; text-align:center;">
+                       <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png"
+                           alt="Waldoch Logo"
+                           style="max-width:200px; height:auto;">
+                   </p>`,
         });
 
-        // === 2️⃣ Add customer to Shopify ===
+        emailSent = true;
+    } catch (err) {
+        console.error("Email sending failed:", err);
+    }
+
+    // 2️⃣ Add or update Shopify customer
+    try {
         const shopifyResponse = await fetch(`https://${process.env.SHOPIFY_SHOP}.myshopify.com/admin/api/2025-07/customers.json`, {
             method: "POST",
             headers: {
@@ -64,18 +73,22 @@ app.post("/api/send-rebate", async (req, res) => {
             }),
         });
 
-        const shopifyData = await shopifyResponse.json();
-
+        shopifyResponseData = await shopifyResponse.json();
         if (!shopifyResponse.ok) {
-            console.error("Shopify error:", shopifyData);
-            return res.status(500).json({ error: "Failed to create Shopify customer" });
+            console.error("Shopify error:", shopifyResponseData);
+        } else {
+            shopifySuccess = true;
         }
-
-        res.json({ success: true, shopifyData });
     } catch (err) {
-        console.error("Error sending rebate or creating customer:", err);
-        res.status(500).json({ error: "Failed to send rebate or create customer" });
+        console.error("Shopify API error:", err);
     }
+
+    // 3️⃣ Respond with status for each step
+    res.json({
+        emailSent,
+        shopifySuccess,
+        shopifyData: shopifyResponseData,
+    });
 });
 
 const PORT = process.env.PORT || 10000;
