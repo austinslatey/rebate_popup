@@ -7,42 +7,42 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: "*", // you can also whitelist your Shopify domain
-  methods: ["GET", "POST"],
+    origin: "*", // you can also whitelist your Shopify domain
+    methods: ["GET", "POST"],
 }));
 app.use(express.json());
 
 app.post("/api/send-rebate", async (req, res) => {
-  const { email, pdfUrl } = req.body;
+    const { email, pdfUrl } = req.body;
 
-  if (!email || !pdfUrl) {
-    return res.status(400).json({ error: "Missing email or pdfUrl" });
-  }
+    if (!email || !pdfUrl) {
+        return res.status(400).json({ error: "Missing email or pdfUrl" });
+    }
 
-  try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.sendgrid.net",
-      port: process.env.SMTP_PORT || 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT, 10),
+            secure: false, // true for 465, false for 587
+            auth: {
+                user: process.env.EMAIL_USER, // should be 'apikey'
+                pass: process.env.EMAIL_PASS, // SendGrid API key
+            },
+        });
 
-    await transporter.sendMail({
-      from: `"Superwinch Rebates" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Superwinch Rebate Form",
-      html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
+        await transporter.sendMail({
+            from: `"Superwinch Rebates" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: "Superwinch Rebate Form",
+            html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
              <p>Print and complete it to claim your cash back.</p>`,
-    });
+        });
 
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Error sending email:", err);
-    res.status(500).json({ error: "Failed to send email" });
-  }
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Error sending email:", err);
+        res.status(500).json({ error: "Failed to send email" });
+    }
 });
 
 const PORT = process.env.PORT || 10000;
