@@ -14,7 +14,11 @@
   {% assign is_rebate_product = true %}
 {% endif %}
 
-{% if current_date >= start_date and current_date <= end_date and is_excluded_page == false and is_rebate_product == false %}
+{% if current_date >= start_date
+  and current_date <= end_date
+  and is_excluded_page == false
+  and is_rebate_product == false
+%}
   <div id="rebateModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -25,7 +29,7 @@
         alt="Superwinch"
         title="Superwinch"
       >
-      <h2 id="color-change">Cash Back Rebate!</h2>
+      <h2 id="color-change">Mail-In Consumer Rebate!</h2>
       <p class="secondary">
         From September 15 to November 15, 2025, get up to $100 cash back on select Superwinch items.
       </p>
@@ -40,7 +44,12 @@
               <p>{{ product.title }}</p>
             </a>
             {% if product.metafields.custom.cash_back_rebate_amount != blank %}
-              <a href="{{ 'Superwinch-rebate-form.pdf' | file_url }}" target="_blank" class="cashback-notice" style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500; display: block; text-decoration: none;">
+              <a
+                href="{{ 'Superwinch-rebate-form.pdf' | file_url }}"
+                target="_blank"
+                class="cashback-notice"
+                style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500; display: block; text-decoration: none;"
+              >
                 Cash Back: {{ product.metafields.custom.cash_back_rebate_amount | times: 100 | money }}
               </a>
             {% endif %}
@@ -50,16 +59,19 @@
         {% endfor %}
       </div>
 
-      <button class="popupBtn" onclick="window.location.href='https://store.waldoch.com/collections/superwinch-rebate-2025'">
+      <button
+        class="popupBtn"
+        onclick="window.location.href='https://store.waldoch.com/collections/superwinch-rebate-2025'"
+      >
         View All Qualifying Products
       </button>
       <!-- Rebate form options -->
       <div class="rebate-form-container">
         <h3 id="color-change">Get Your Rebate Form:</h3>
+        <button class="popupBtn" onclick="window.open('{{ 'Superwinch-rebate-form.pdf' | file_url }}', '_blank')">
+          View PDF
+        </button>
         <div class="button-group">
-          <button class="popupBtn" onclick="window.open('{{ 'Superwinch-rebate-form.pdf' | file_url }}', '_blank')">
-            View PDF
-          </button>
           <form id="emailRebateForm" onsubmit="sendEmail(event)" class="rebate-form">
             <input type="email" id="userEmail" placeholder="Enter your email" required>
             <button type="submit" class="popupBtn">Email PDF to Me</button>
@@ -79,17 +91,17 @@
       display: none;
     }
 
-    .header-logo-image {
+    #rebateModal .header-logo-image {
       display: block;
       margin: 0 auto;
       max-height: 2.35714rem;
     }
 
-    .secondary {
+    #rebateModal .secondary {
       color: rgb(255, 204, 102);
     }
 
-    .popupBtn {
+    #rebateModal .popupBtn {
       background-color: rgb(255, 204, 102);
       font-size: 16px;
       padding: 8px 16px;
@@ -99,17 +111,17 @@
       transition: background-color 0.3s;
     }
 
-    .popupBtn:hover {
+    #rebateModal .popupBtn:hover {
       background-color: rgb(230, 184, 92);
     }
 
-    #color-change {
+    #rebateModal #color-change {
       margin-top: 8px;
       margin-bottom: 0;
       color: #fff;
     }
 
-    .modal-content {
+    #rebateModal .modal-content {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -126,12 +138,12 @@
       border-radius: 8px;
     }
 
-    .rebate-form-container {
+    #rebateModal .rebate-form-container {
       margin: 20px 0;
       text-align: center;
     }
 
-    .button-group {
+    #rebateModal .button-group {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
@@ -139,21 +151,21 @@
       align-items: center;
     }
 
-    .rebate-form {
+    #rebateModal .rebate-form {
       display: flex;
       gap: 10px;
       align-items: center;
-      margin: 0;
+      margin: 12px;
     }
 
-    .rebate-form input {
+    #rebateModal .rebate-form input {
       padding: 8px;
       font-size: 16px;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
 
-    .close {
+    #rebateModal .close {
       color: #aaa;
       position: absolute;
       top: 10px;
@@ -163,31 +175,31 @@
       cursor: pointer;
     }
 
-    .close:hover {
+    #rebateModal .close:hover {
       color: black;
     }
 
-    .rebate-carousel {
+    #rebateModal .rebate-carousel {
       background-color: #fff;
       margin: 20px;
       position: relative;
     }
 
-    .carousel-item {
+    #rebateModal .carousel-item {
       text-align: center;
       padding: 10px;
     }
 
-    .carousel-item img {
+    #rebateModal .carousel-item img {
       max-width: 200px;
     }
 
-    .slick-track {
+    #rebateModal .slick-track {
       opacity: 1 !important;
     }
 
-    .slick-prev,
-    .slick-next {
+    #rebateModal .slick-prev,
+    #rebateModal .slick-next {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
@@ -202,21 +214,21 @@
       opacity: 0.5;
     }
 
-    .slick-prev:hover,
-    .slick-next:hover {
+    #rebateModal .slick-prev:hover,
+    #rebateModal .slick-next:hover {
       color: #000;
       opacity: 0.5;
     }
 
-    .slick-prev {
+    #rebateModal .slick-prev {
       left: -24px;
     }
 
-    .slick-next {
+    #rebateModal .slick-next {
       right: -24px;
     }
 
-    .carousel-item .cashback-notice {
+    #rebateModal .carousel-item .cashback-notice {
       color: #2a2a2a;
       font-size: 14px;
       background-color: #e6f3ff;
@@ -229,7 +241,7 @@
       text-decoration: none;
     }
 
-    .carousel-item .cashback-notice:hover {
+    #rebateModal .carousel-item .cashback-notice:hover {
       background-color: #d0e8ff;
       text-decoration: none;
     }
