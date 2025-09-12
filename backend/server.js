@@ -1,52 +1,49 @@
 import express from "express";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
+import cors from "cors";
+import nodemailer from "nodemailer";
 
 dotenv.config();
-
 const app = express();
+
+app.use(cors({
+  origin: "*", // you can also whitelist your Shopify domain
+  methods: ["GET", "POST"],
+}));
 app.use(express.json());
 
-// Load from .env
-const SHOPIFY_SHOP = process.env.SHOPIFY_SHOP;
-const API_TOKEN = process.env.SHOPIFY_API_TOKEN;
-const PORT = process.env.PORT || 3000;
+app.post("/api/send-rebate", async (req, res) => {
+  const { email, pdfUrl } = req.body;
 
-// Route for capturing emails
-app.post("/rebate-capture", async (req, res) => {
-  const { email } = req.body;
+  if (!email || !pdfUrl) {
+    return res.status(400).json({ error: "Missing email or pdfUrl" });
+  }
 
   try {
-    const response = await fetch(
-      `https://${SHOPIFY_SHOP}/admin/api/2025-07/customers.json`,
-      {
-        method: "POST",
-        headers: {
-          "X-Shopify-Access-Token": API_TOKEN,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customer: {
-            email,
-            tags: "Rebate Form",
-          },
-        }),
-      }
-    );
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.sendgrid.net",
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-    const result = await response.json();
+    await transporter.sendMail({
+      from: `"Superwinch Rebates" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Superwinch Rebate Form",
+      html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
+             <p>Print and complete it to claim your cash back.</p>`,
+    });
 
-    if (response.ok) {
-      res.json({ success: true, customer: result.customer });
-    } else {
-      res.status(response.status).json({ success: false, error: result.errors });
-    }
+    res.json({ success: true });
   } catch (err) {
-    console.error("Error saving customer:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("Error sending email:", err);
+    res.status(500).json({ error: "Failed to send email" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
