@@ -2,7 +2,19 @@
 {% capture start_date %}{{ '2025-09-10' | date: '%s' }}{% endcapture %}
 {% capture end_date %}{{ '2025-11-15' | date: '%s' | plus: 86399 }}{% endcapture %}
 
-{% if current_date >= start_date and current_date <= end_date %}
+{% assign excluded_paths = '/account/login,/account/register,/collections/superwinch-rebate-2025' | split: ',' %}
+{% assign is_excluded_page = false %}
+{% for path in excluded_paths %}
+  {% if request.path == path %}
+    {% assign is_excluded_page = true %}
+  {% endif %}
+{% endfor %}
+{% assign is_rebate_product = false %}
+{% if product and product.collections contains collections['superwinch-rebate-2025'] %}
+  {% assign is_rebate_product = true %}
+{% endif %}
+
+{% if current_date >= start_date and current_date <= end_date and is_excluded_page == false and is_rebate_product == false %}
   <div id="rebateModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -26,29 +38,31 @@
             <a href="{{ product.url }}">
               <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title | escape }}">
               <p>{{ product.title }}</p>
-              {% if product.metafields.custom.cash_back_rebate_amount != blank %}
-                <div class="cashback-notice" style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500;">
-                  Cash Back: {{ product.metafields.custom.cash_back_rebate_amount | times: 100 | money }}
-                </div>
-              {% endif %}
             </a>
+            {% if product.metafields.custom.cash_back_rebate_amount != blank %}
+              <a href="{{ 'Superwinch-rebate-form.pdf' | file_url }}" target="_blank" class="cashback-notice" style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500; display: block; text-decoration: none;">
+                Cash Back: {{ product.metafields.custom.cash_back_rebate_amount | times: 100 | money }}
+              </a>
+            {% endif %}
           </div>
         {% else %}
           <p>No qualifying items available.</p>
         {% endfor %}
       </div>
 
-      <button class="btn" onclick="window.location.href='https://store.waldoch.com/collections/superwinch-rebate-2025'">View All Products</button>
+      <button class="popupBtn" onclick="window.location.href='https://store.waldoch.com/collections/superwinch-rebate-2025'">
+        View All Qualifying Products
+      </button>
       <!-- Rebate form options -->
       <div class="rebate-form-container">
         <h3 id="color-change">Get Your Rebate Form:</h3>
         <div class="button-group">
-          <button class="btn" onclick="window.open('{{ 'Superwinch-rebate-form.pdf' | file_url }}', '_blank')">
+          <button class="popupBtn" onclick="window.open('{{ 'Superwinch-rebate-form.pdf' | file_url }}', '_blank')">
             View PDF
           </button>
           <form id="emailRebateForm" onsubmit="sendEmail(event)" class="rebate-form">
             <input type="email" id="userEmail" placeholder="Enter your email" required>
-            <button type="submit" class="btn">Email PDF to Me</button>
+            <button type="submit" class="popupBtn">Email PDF to Me</button>
           </form>
         </div>
       </div>
@@ -75,10 +89,18 @@
       color: rgb(255, 204, 102);
     }
 
-    .btn {
+    .popupBtn {
       background-color: rgb(255, 204, 102);
-      font-size: 24px;
-      margin: 0;
+      font-size: 16px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .popupBtn:hover {
+      background-color: rgb(230, 184, 92);
     }
 
     #color-change {
@@ -131,20 +153,6 @@
       border-radius: 4px;
     }
 
-    .btn {
-      background-color: rgb(255, 204, 102);
-      font-size: 16px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .btn:hover {
-      background-color: rgb(230, 184, 92);
-    }
-
     .close {
       color: #aaa;
       position: absolute;
@@ -178,7 +186,6 @@
       opacity: 1 !important;
     }
 
-    /* Style for the arrows */
     .slick-prev,
     .slick-next {
       position: absolute;
@@ -209,7 +216,6 @@
       right: -24px;
     }
 
-    /* Style for cashback notice in carousel */
     .carousel-item .cashback-notice {
       color: #2a2a2a;
       font-size: 14px;
@@ -219,6 +225,13 @@
       margin: 10px 0;
       text-align: center;
       font-weight: 500;
+      display: block;
+      text-decoration: none;
+    }
+
+    .carousel-item .cashback-notice:hover {
+      background-color: #d0e8ff;
+      text-decoration: none;
     }
   </style>
 
@@ -228,22 +241,30 @@
       var modal = document.getElementById('rebateModal');
       var closeBtn = modal.querySelector('.close');
 
-      // open on load
-      modal.style.display = 'block';
+      // Check session storage for modal display count
+      var modalDisplayCount = sessionStorage.getItem('rebateModalCount') || 0;
+      modalDisplayCount = parseInt(modalDisplayCount, 10);
 
-      // close on X
+      // Only show modal if displayed less than 3 times
+      if (modalDisplayCount < 3) {
+        modal.style.display = 'block';
+        // Increment and update count
+        sessionStorage.setItem('rebateModalCount', modalDisplayCount + 1);
+      }
+
+      // Close on X
       closeBtn.addEventListener('click', function() {
         modal.style.display = 'none';
       });
 
-      // close if clicked outside modal-content
+      // Close if clicked outside modal-content
       modal.addEventListener('click', function(e) {
         if (e.target === modal) {
           modal.style.display = 'none';
         }
       });
 
-      // init slick
+      // Initialize slick carousel
       try {
         $('.rebate-carousel').slick({
           slidesToShow: 3,
