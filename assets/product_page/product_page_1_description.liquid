@@ -1,13 +1,18 @@
-{% assign target_collection = collections['superwinch-rebate-2025'] %}
-    {% if product.collections contains target_collection
-      and product.metafields.custom.cash_back_rebate_amount != blank
-    %}
-      <a
-        href="{{ 'Superwinch-rebate-form.pdf' | file_url }}"
-        target="_blank"
-        class="cashback-notice"
-        style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500; display: block; text-decoration: none;"
-      >
-        Cash Back Rebate: {{ product.metafields.custom.cash_back_rebate_amount | times: 100 | money }}
-      </a>
+{% capture current_date %}{{ 'now' | date: '%s' }}{% endcapture %}
+    {% capture start_date %}{{ '2025-09-10' | date: '%s' }}{% endcapture %}
+    {% capture end_date %}{{ '2025-11-15' | date: '%s' | plus: 86399 }}{% endcapture %}
+    {% if current_date >= start_date and current_date <= end_date %}
+      {% assign target_collection = collections['superwinch-rebate-2025'] %}
+      {% if product.collections contains target_collection
+        and product.metafields.custom.cash_back_rebate_amount != blank
+      %}
+        <a
+          href="{{ 'Superwinch-rebate-form.pdf' | file_url }}"
+          target="_blank"
+          class="cashback-notice"
+          style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500; display: block; text-decoration: none;"
+        >
+          Cash Back Rebate: {{ product.metafields.custom.cash_back_rebate_amount | times: 100 | money }}
+        </a>
+      {% endif %}
     {% endif %}
