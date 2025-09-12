@@ -1,0 +1,17 @@
+a.cashback-notice {
+  color: #2a2a2a;
+  font-size: 14px;
+  background-color: #e6f3ff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 10px 0;
+  text-align: center;
+  font-weight: 500;
+  display: block;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+a.cashback-notice:hover {
+  background-color: #d0e8ff !important; /* Force darker blue on hover */
+  text-decoration: none !important;
+}
