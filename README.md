@@ -1,52 +1,178 @@
-# How to Implement the Rebate Popup in Your Shopify Theme
+# Table of Contents
 
-This guide explains how to add a popup to your Shopify store that alerts users about a cash back rebate for specific items from the "superwinch-rebate-2025" collection, active from September 15, 2025, to November 15, 2025. The popup includes a carousel of qualifying products, options to download or print a rebate form PDF, and a way to email the form link to users.
+- [Superwinch Rebate Popup & Dynamic Pricing (Shopify Integration)](#superwinch-rebate-popup--dynamic-pricing-shopify-integration)
+  - [Features](#features)
+    - [Popup Modal](#popup-modal)
+    - [Dynamic Rebate Pricing](#dynamic-rebate-pricing)
+    - [Email Backend](#email-backend)
+    - [Date Logic](#date-logic)
+  - [Prerequisites](#prerequisites)
+  - [Frontend Setup](#frontend-setup)
+    - [Step 1: Libraries](#step-1-libraries)
+    - [Step 2: Popup Snippet](#step-2-popup-snippet)
+    - [Step 3: Dynamic Price Display](#step-3-dynamic-price-display)
+  - [Backend Setup (Render Deployment)](#backend-setup-render-deployment)
+    - [Dependencies](#dependencies)
+    - [Deploy Express Server](#deploy-express-server)
+    - [Environment Variables (.env)](#environment-variables-env)
+    - [Render Setup](#render-setup)
+  - [Testing](#testing)
+    - [Optional Enhancements](#optional-enhancements)
+    - [Notes](#notes)
+
+# Superwinch Rebate Popup & Dynamic Pricing (Shopify Integration)
+
+This project adds a **rebate marketing system** to your Shopify store.  
+It includes:
+
+- A **popup modal** that appears during an active rebate period.
+- A **carousel of qualifying products** pulled from a dedicated collection.
+- **Dynamic rebate pricing** displayed on product and collection pages.
+- **Rebate form delivery options**:
+  - Download PDF
+  - Print PDF
+  - Email form link via backend API (SendGrid + Shopify customer creation/update)
+
+---
+
+## Features
+
+### Popup Modal
+- Triggers automatically when the rebate period is active.
+- Displays products from the `superwinch-rebate-2025` collection.
+- Provides download, print, and email options for the rebate form.
+
+<img src="./assets/read_only/images/modal.jpg" alt="Modal" width="400">
+
+### Dynamic Rebate Pricing
+- Collection and product pages show cash back amount.
+
+<img src="./assets/read_only/images/collection.jpg" alt="Collection" width="400">
+
+<img src="./assets/read_only/images/product.jpg" alt="Product" width="400">
+
+
+### Email Backend
+- Built with Node.js + Express.
+- Uses SendGrid via Nodemailer for secure emailing.
+- Integrates with Shopify Admin API:
+  - Creates new customer with `rebate` tag.
+  - If customer already exists, updates their tags instead of failing.
+
+  <img src="./assets/read_only/images/email.jpg" alt="Email" width="400">
+
+### Date Logic
+- Popup and rebate display are only active between:
+  - **Start**: September 15, 2025
+  - **End**: November 15, 2025
+
+---
 
 ## Prerequisites
-- Access to your Shopify admin (Online Store > Themes > Actions > Edit code).
-- A duplicate of your live theme for testing (Online Store > Themes > Actions > Duplicate).
-- The rebate form PDF uploaded to Shopify (Content > Files > Upload files). Note the file name (e.g., `rebate-form.pdf`).
-- The "superwinch-rebate-2025" collection created with all qualifying products (Products > Collections > Create collection).
 
-## Step 1: Add Required Libraries
-1. Download Slick Slider files (`slick.min.js` and `slick.css`) from https://kenwheeler.github.io/slick/.
-2. In Shopify admin, go to Online Store > Themes > Actions > Edit code.
-3. In the Assets folder, upload `slick.min.js` and `slick.css`.
-4. Open the `theme.liquid` file in the Layout folder.
-5. In the `<head>` section, add links to include jQuery and Slick Slider:
-   - Reference `slick.css` from the Assets folder.
-   - Include jQuery from a CDN (e.g., `https://code.jquery.com/jquery-3.6.0.min.js`).
-   - Reference `slick.min.js` from the Assets folder.
+- Shopify admin access.
+- Duplicate theme for safe testing (`Online Store > Themes > Actions > Duplicate`).
+- Rebate form PDF uploaded in **Content > Files** (`rebate-form.pdf`).
+- Collection named **superwinch-rebate-2025** with qualifying products.
+- SendGrid account with verified sender identity (e.g., `noreply@example.com`).
+- Private Shopify app (Admin API access token with **read/write customers** scope).
 
-## Step 2: Create the Popup Snippet
-1. In the Snippets folder, click "Add a new snippet" and name it `rebate-popup`.
-2. Copy the provided popup code into `rebate-popup.liquid`. Ensure the collection handle is `superwinch-rebate-2025` and the PDF file name matches your uploaded file (e.g., `rebate-form.pdf`).
-3. Save the snippet.
+---
 
-## Step 3: Include the Snippet in Your Theme
-1. Open `theme.liquid` in the Layout folder.
-2. Just before the `</body>` tag, add the include statement for the snippet.
-3. To show the popup only on specific pages (e.g., homepage), wrap the include statement in a conditional (e.g., check if the template is `index`).
-4. Save the file.
+## Frontend Setup
 
-## Step 4: Test the Popup
-1. Preview the theme in the Shopify theme editor (Online Store > Themes > Actions > Preview).
-2. Verify the popup appears on page load, shows the carousel with products from the "superwinch-rebate-2025" collection, and includes working download, print, and email buttons.
-3. Test the date logic by temporarily adjusting the start/end dates in the snippet to include today’s date.
-4. Check responsiveness on mobile devices (carousel should adjust to show fewer items).
+### Step 1: Libraries
+- Upload `slick.min.js` and `slick.css` to **Assets**.
+- Add includes in `theme.liquid`:
+  ```html
+  <link href="{{ 'slick.css' | asset_url }}" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ 'slick.min.js' | asset_url }}"></script>
+  ```
 
-## Step 5: Add Rebate Form to Order Confirmation Email (Optional)
-1. Go to Settings > Notifications > Order confirmation in your Shopify admin.
-2. Add a conditional statement to include a link to the rebate form PDF if any purchased item is from the "superwinch-rebate-2025" collection.
-3. Save the changes and test by placing an order with a qualifying item.
+### Step 2: Popup Snippet
+- Add `snippets/rebate-popup.liquid`.
+- Include product carousel + buttons for Download, Print, Email.
+- Insert snippet before `</body>` in `theme.liquid`.
 
-## Step 6: Customize and Finalize
-- Adjust the popup’s styling (colors, fonts, sizes) in the inline CSS within the snippet to match your theme or the retailer’s wireframe.
-- If the number of products is small, consider replacing the carousel with a static list for simplicity.
-- To show the popup only once per user, add cookie logic using a library like js-cookie (upload to Assets and modify the JavaScript).
-- For advanced emailing (e.g., sending the PDF as an attachment), explore Shopify apps like Klaviyo, Privy, or Shopify Flow (if on Shopify Plus).
+### Step 3: Dynamic Price Display
+- Update `product-card` and `product-template` snippets:
+  ```liquid
+  {% if product.collections contains collections['superwinch-rebate-2025'] %}
+    <p class="rebate-price">
+      After Rebate: {{ product.price | money_without_trailing_zeros | minus: rebate_amount }}
+    </p>
+  {% endif %}
+  ```
+
+---
+
+## Backend Setup (Render Deployment)
+
+### Dependencies
+- Ensure the following Node.js dependencies are included in your `package.json`:
+  ```json
+  {
+    "dependencies": {
+      "cors": "^2.8.5",
+      "dotenv": "^17.2.2",
+      "express": "^5.1.0",
+      "node-fetch": "^3.3.2",
+      "nodemailer": "^7.0.6"
+    }
+  }
+  ```
+- Run `npm install` to install these dependencies in your backend project.
+
+### Deploy Express Server
+- Code lives in `/backend` (Node 18+).
+- Example route:
+  ```js
+  app.post("/api/send-rebate", async (req, res) => {
+    // Send email via SendGrid
+    // Check if Shopify customer exists, update or create
+    res.json({ emailSent: true, shopifySuccess: true });
+  });
+  ```
+
+### Environment Variables (.env)
+```env
+PORT=10000
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+EMAIL_USER=apikey
+EMAIL_PASS=YOUR_SENDGRID_API_KEY
+EMAIL_FROM=noreply@example.com
+SHOPIFY_SHOP=your-shop-name.myshopify.com
+SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxx
+```
+
+### Render Setup
+- Create new Web Service.
+- Add environment variables above.
+- Use `npm start` as start command.
+
+---
+
+## Testing
+
+- Load preview theme → popup should display.
+- Click Download → PDF should open.
+- Click Print → print dialog should appear.
+- Click Email:
+  - Email should arrive from `noreply@example.com`.
+  - Customer should be created/updated in Shopify with tag `rebate`.
+
+---
+
+## Optional Enhancements
+
+- **Cookie-based frequency control**: Only show popup once per session using `js-cookie`.
+
+---
 
 ## Notes
-- Always test changes in a duplicate theme to avoid disrupting your live store.
-- If the popup must match a specific wireframe from the retailer’s PDF, adjust the HTML/CSS in the snippet to reflect the design.
-- The email feature uses a mailto link, which opens the user’s email client with a pre-filled message containing the PDF link. For direct emailing with attachments, integrate a third-party service like SendGrid via a private app or webhook.
+
+- Always test in a duplicate theme before publishing live.
+- Ensure your sender domain (`noreply@example.com`) is verified in SendGrid.
+- If using Klaviyo/Shopify Flow, you can enhance follow-up automations for tagged customers.
