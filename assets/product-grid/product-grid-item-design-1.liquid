@@ -10,7 +10,7 @@
         </div>
       {%- endif -%}
       {% capture current_date %}{{ 'now' | date: '%s' }}{% endcapture %}
-      {% capture start_date %}{{ '2025-09-10' | date: '%s' }}{% endcapture %}
+      {% capture start_date %}{{ '2025-09-15' | date: '%s' }}{% endcapture %}
       {% capture end_date %}{{ '2025-11-15' | date: '%s' | plus: 86399 }}{% endcapture %}
       {% if current_date >= start_date and current_date <= end_date %}
         {% assign target_collection = collections['superwinch-rebate-2025'] %}

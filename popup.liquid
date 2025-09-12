@@ -1,5 +1,5 @@
 {% capture current_date %}{{ 'now' | date: '%s' }}{% endcapture %}
-{% capture start_date %}{{ '2025-09-10' | date: '%s' }}{% endcapture %}
+{% capture start_date %}{{ '2025-09-15' | date: '%s' }}{% endcapture %}
 {% capture end_date %}{{ '2025-11-15' | date: '%s' | plus: 86399 }}{% endcapture %}
 
 {% assign excluded_paths = '/account/login,/account/register,/collections/superwinch-rebate-2025' | split: ',' %}
