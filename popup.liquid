@@ -26,6 +26,11 @@
             <a href="{{ product.url }}">
               <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title | escape }}">
               <p>{{ product.title }}</p>
+              {% if product.metafields.custom.cash_back_rebate_amount != blank %}
+                <div class="cashback-notice" style="color: #2a2a2a; font-size: 14px; background-color: #e6f3ff; border-radius: 4px; padding: 8px 12px; margin: 10px 0; text-align: center; font-weight: 500;">
+                  Cash Back: {{ product.metafields.custom.cash_back_rebate_amount | times: 100 | money }}
+                </div>
+              {% endif %}
             </a>
           </div>
         {% else %}
@@ -51,159 +56,170 @@
   </div>
 
   <!-- Inline CSS for modal and carousel -->
-<style>
-#rebateModal.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10000;
-  display: none;
-}
+  <style>
+    #rebateModal.modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10000;
+      display: none;
+    }
 
-.header-logo-image {
-  display: block;
-  margin: 0 auto;
-  max-height: 2.35714rem;
-}
+    .header-logo-image {
+      display: block;
+      margin: 0 auto;
+      max-height: 2.35714rem;
+    }
 
-.secondary {
-  color: rgb(255, 204, 102);
-}
+    .secondary {
+      color: rgb(255, 204, 102);
+    }
 
-.btn {
-  background-color: rgb(255, 204, 102);
-  font-size: 24px;
-  margin: 0;
-}
+    .btn {
+      background-color: rgb(255, 204, 102);
+      font-size: 24px;
+      margin: 0;
+    }
 
-#color-change {
-  margin-top: 8px;
-  margin-bottom: 0;
-  color: #fff;
-}
+    #color-change {
+      margin-top: 8px;
+      margin-bottom: 0;
+      color: #fff;
+    }
 
-.modal-content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgb(7, 64, 151);
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%;
-  max-width: 800px; /* Increased from 600px to 800px for more arrow space */
-  max-height: 80vh;
-  overflow: visible; /* Prevent clipping of arrows */
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-}
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgb(7, 64, 151);
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow: visible;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
 
-.rebate-form-container {
-  margin: 20px 0; /* Adds spacing above and below the section */
-  text-align: center;
-}
+    .rebate-form-container {
+      margin: 20px 0;
+      text-align: center;
+    }
 
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px; /* Space between buttons */
-  justify-content: center; /* Center buttons horizontally */
-  align-items: center; /* Align items vertically */
-}
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
 
-.rebate-form {
-  display: flex;
-  gap: 10px; /* Space between input and button */
-  align-items: center; /* Align input and button vertically */
-  margin: 0; /* Remove default form margin */
-}
+    .rebate-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 0;
+    }
 
-.rebate-form input {
-  padding: 8px;
-  font-size: 16px; /* Match button font size for consistency */
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
+    .rebate-form input {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
 
-.btn {
-  background-color: rgb(255, 204, 102);
-  font-size: 16px; /* Reduced from 24px for better proportionality */
-  padding: 8px 16px; /* Add padding for better button appearance */
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
+    .btn {
+      background-color: rgb(255, 204, 102);
+      font-size: 16px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
 
-.btn:hover {
-  background-color: rgb(230, 184, 92); /* Slightly darker on hover */
-}
+    .btn:hover {
+      background-color: rgb(230, 184, 92);
+    }
 
-.close {
-  color: #aaa;
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .close {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.close:hover {
-  color: black;
-}
+    .close:hover {
+      color: black;
+    }
 
-.rebate-carousel {
-  background-color: #fff;
-  margin: 20px;
-  position: relative; /* Ensure carousel is a positioning context for arrows */
-}
+    .rebate-carousel {
+      background-color: #fff;
+      margin: 20px;
+      position: relative;
+    }
 
-.carousel-item {
-  text-align: center;
-  padding: 10px;
-}
+    .carousel-item {
+      text-align: center;
+      padding: 10px;
+    }
 
-.carousel-item img {
-  max-width: 200px;
-}
+    .carousel-item img {
+      max-width: 200px;
+    }
 
-.slick-track {
-  opacity: 1 !important;
-}
+    .slick-track {
+      opacity: 1 !important;
+    }
 
-/* Style for the arrows */
-.slick-prev,
-.slick-next {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 48px;
-  color: #333;
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 1;
-  padding: 10px;
-  line-height: 1;
-  opacity: 0.5;
-}
+    /* Style for the arrows */
+    .slick-prev,
+    .slick-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 48px;
+      color: #333;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 1;
+      padding: 10px;
+      line-height: 1;
+      opacity: 0.5;
+    }
 
-.slick-prev:hover,
-.slick-next:hover {
-  color: #000;
-  opacity: 0.5;
-}
+    .slick-prev:hover,
+    .slick-next:hover {
+      color: #000;
+      opacity: 0.5;
+    }
 
-.slick-prev {
-  left: -24px; /* Positioned outside the carousel */
-}
+    .slick-prev {
+      left: -24px;
+    }
 
-.slick-next {
-  right: -24px; /* Positioned outside the carousel */
-}
+    .slick-next {
+      right: -24px;
+    }
 
+    /* Style for cashback notice in carousel */
+    .carousel-item .cashback-notice {
+      color: #2a2a2a;
+      font-size: 14px;
+      background-color: #e6f3ff;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin: 10px 0;
+      text-align: center;
+      font-weight: 500;
+    }
   </style>
 
   <!-- Inline JavaScript -->
