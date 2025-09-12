@@ -56,7 +56,7 @@ app.post("/api/send-rebate", async (req, res) => {
 
     // 2️⃣ Add or update Shopify customer
     try {
-        const shopifyResponse = await fetch(`https://${process.env.SHOPIFY_SHOP}.myshopify.com/admin/api/2025-07/customers.json`, {
+        const shopifyResponse = await fetch(`https://${process.env.SHOPIFY_SHOP}/admin/api/2025-07/customers.json`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
