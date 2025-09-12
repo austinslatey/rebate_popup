@@ -33,7 +33,7 @@
         {% endfor %}
       </div>
 
-      <!-- Rebate form options -->
+      <button class="btn" onclick="window.location.href='https://store.waldoch.com/collections/superwinch-rebate-2025'">View All Products</button>
       <!-- Rebate form options -->
       <div class="rebate-form-container">
         <h3 id="color-change">Get Your Rebate Form:</h3>
@@ -51,157 +51,159 @@
   </div>
 
   <!-- Inline CSS for modal and carousel -->
-  <style>
-        #rebateModal.modal {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.5);
-          z-index: 10000;
-          display: none;
-        }
+<style>
+#rebateModal.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: none;
+}
 
+.header-logo-image {
+  display: block;
+  margin: 0 auto;
+  max-height: 2.35714rem;
+}
 
-        .header-logo-image {
-        display: block;
-        margin: 0 auto;
-        max-height: 2.35714rem;
-        }
+.secondary {
+  color: rgb(255, 204, 102);
+}
 
-        .secondary {
-            color: RGB(255, 204, 102)
+.btn {
+  background-color: rgb(255, 204, 102);
+  font-size: 24px;
+  margin: 0;
+}
 
-        }
+#color-change {
+  margin-top: 8px;
+  margin-bottom: 0;
+  color: #fff;
+}
 
-        .btn {
-            background-color: RGB(255, 204, 102);
-            font-size: 24px;
-            margin: 0px;
-        }
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgb(7, 64, 151);
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 800px; /* Increased from 600px to 800px for more arrow space */
+  max-height: 80vh;
+  overflow: visible; /* Prevent clipping of arrows */
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
 
-        #color-change {
-            margin-top: 8px;
-            margin-bottom: 0px;
-            color: #fff
-        }
+.rebate-form-container {
+  margin: 20px 0; /* Adds spacing above and below the section */
+  text-align: center;
+}
 
-        .modal-content {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background-color: rgb(7, 64, 151);
-          padding: 20px;
-          border: 1px solid #888;
-          width: 80%;
-          max-width: 800px; /* Increased from 600px to 800px for more arrow space */
-          max-height: 80vh;
-          overflow: visible; /* Prevent clipping of arrows */
-          text-align: center;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-          border-radius: 8px;
-        }
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* Space between buttons */
+  justify-content: center; /* Center buttons horizontally */
+  align-items: center; /* Align items vertically */
+}
 
-        .rebate-form-container {
-      margin: 20px 0; /* Adds spacing above and below the section */
-      text-align: center;
-    }
+.rebate-form {
+  display: flex;
+  gap: 10px; /* Space between input and button */
+  align-items: center; /* Align input and button vertically */
+  margin: 0; /* Remove default form margin */
+}
 
-    .button-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px; /* Space between buttons */
-      justify-content: center; /* Center buttons horizontally */
-      align-items: center; /* Align items vertically */
-    }
+.rebate-form input {
+  padding: 8px;
+  font-size: 16px; /* Match button font size for consistency */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 
-    .rebate-form {
-      display: flex;
-      gap: 10px; /* Space between input and button */
-      align-items: center; /* Align input and button vertically */
-      margin: 0; /* Remove default form margin */
-    }
+.btn {
+  background-color: rgb(255, 204, 102);
+  font-size: 16px; /* Reduced from 24px for better proportionality */
+  padding: 8px 16px; /* Add padding for better button appearance */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
 
-    .rebate-form input {
-      padding: 8px;
-      font-size: 16px; /* Match button font size for consistency */
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
+.btn:hover {
+  background-color: rgb(230, 184, 92); /* Slightly darker on hover */
+}
 
-    .btn {
-      background-color: RGB(255, 204, 102);
-      font-size: 16px; /* Reduced from 24px for better proportionality */
-      padding: 8px 16px; /* Add padding for better button appearance */
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
+.close {
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    .btn:hover {
-      background-color: RGB(230, 184, 92); /* Slightly darker on hover */
-    }
+.close:hover {
+  color: black;
+}
 
-        .close {
-          color: #aaa;
-          position: absolute;
-          top: 10px;
-          right: 15px;
-          font-size: 28px;
-          font-weight: bold;
-          cursor: pointer;
-        }
+.rebate-carousel {
+  background-color: #fff;
+  margin: 20px;
+  position: relative; /* Ensure carousel is a positioning context for arrows */
+}
 
-        .close:hover {
-          color: black;
-        }
+.carousel-item {
+  text-align: center;
+  padding: 10px;
+}
 
-        .rebate-carousel {
+.carousel-item img {
+  max-width: 200px;
+}
 
-          margin: 20px
-          position: relative; /* Ensure carousel is a positioning context for arrows */
-        }
+.slick-track {
+  opacity: 1 !important;
+}
 
-        .carousel-item {
-            background-color: #fff
-          text-align: center;
-          padding: 10px;
-        }
+/* Style for the arrows */
+.slick-prev,
+.slick-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 48px;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+  padding: 10px;
+  line-height: 1;
+  opacity: 0.5;
+}
 
-        .carousel-item img {
-          max-width: 200px;
-        }
+.slick-prev:hover,
+.slick-next:hover {
+  color: #000;
+  opacity: 0.5;
+}
 
-        .slick-track {
-          opacity: 1 !important;
-        }
+.slick-prev {
+  left: -24px; /* Positioned outside the carousel */
+}
 
-        /* Style for the arrows */
-        .slick-prev, .slick-next {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 48px;
-          color: #333;
-          background: none;
-          border: none;
-          cursor: pointer;
-          z-index: 1;
-          padding: 10px;
-          line-height: 1;
-        }
+.slick-next {
+  right: -24px; /* Positioned outside the carousel */
+}
 
-        .slick-prev:hover, .slick-next:hover {
-          color: #000;
-        }
-
-        .slick-prev {
-          left: -24px; /* Positioned outside the carousel */
-        }
-
-        .slick-next {
-          right: -24px; /* Positioned outside the carousel */
-        }
   </style>
 
   <!-- Inline JavaScript -->
