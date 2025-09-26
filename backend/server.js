@@ -32,7 +32,6 @@ app.post("/api/send-rebate", async (req, res) => {
     try {
         const msg = {
             to: email,
-            
             // Must be a verified sender in SendGrid
             from: process.env.EMAIL_FROM, 
             subject: "Superwinch Rebate Form",
