@@ -1,14 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import sgMail from "@sendgrid/mail";
+import sgMail from "@sendgrid/mail"; // Replace nodemailer with @sendgrid/mail
 import fetch from "node-fetch";
 
 dotenv.config();
 const app = express();
 
+// Set SendGrid API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 app.use(cors({
-    origin: "*", // or restrict to Shopify domain
+    // or restrict to Shopify domain
+    origin: "*",
     methods: ["GET", "POST"],
 }));
 app.use(express.json());
@@ -24,35 +28,29 @@ app.post("/api/send-rebate", async (req, res) => {
     let shopifySuccess = false;
     let shopifyData = null;
 
-    // 1️⃣ Send rebate email
+    // 1️⃣ Send rebate email using SendGrid
     try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT, 10),
-            secure: false,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        await transporter.sendMail({
-            from: `"Superwinch Rebates" <${process.env.EMAIL_FROM}>`,
+        const msg = {
             to: email,
+            from: process.env.EMAIL_FROM, // Must be a verified sender in SendGrid
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
-             <p>Print and complete it to claim your cash back.</p>
-             <p>Thank you,</p>
-             <p>The Waldoch Team</p>
-             <p style="margin-top:20px; text-align:center;">
-               <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png"
-                 alt="Waldoch Logo" style="max-width:200px; height:auto;">
-             </p>`,
-        });
+                   <p>Print and complete it to claim your cash back.</p>
+                   <p>Thank you,</p>
+                   <p>The Waldoch Team</p>
+                   <p style="margin-top:20px; text-align:center;">
+                     <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png"
+                       alt="Waldoch Logo" style="max-width:200px; height:auto;">
+                   </p>`,
+        };
 
+        await sgMail.send(msg);
         emailSent = true;
     } catch (err) {
         console.error("Email sending failed:", err);
+        if (err.response) {
+            console.error("SendGrid error response:", err.response.body);
+        }
     }
 
     // 2️⃣ Check if Shopify customer exists
@@ -95,7 +93,6 @@ app.post("/api/send-rebate", async (req, res) => {
                 shopifySuccess = true;
                 shopifyData = existingCustomer;
             }
-
         } else {
             // Customer does not exist → create new
             const createRes = await fetch(
@@ -120,7 +117,6 @@ app.post("/api/send-rebate", async (req, res) => {
             shopifyData = await createRes.json();
             shopifySuccess = createRes.ok;
         }
-
     } catch (err) {
         console.error("Shopify API error:", err);
     }
