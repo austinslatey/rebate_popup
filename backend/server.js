@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import sgMail from "@sendgrid/mail"; // Replace nodemailer with @sendgrid/mail
+import sgMail from "@sendgrid/mail";
 import fetch from "node-fetch";
 
 dotenv.config();
@@ -32,7 +32,9 @@ app.post("/api/send-rebate", async (req, res) => {
     try {
         const msg = {
             to: email,
-            from: process.env.EMAIL_FROM, // Must be a verified sender in SendGrid
+            
+            // Must be a verified sender in SendGrid
+            from: process.env.EMAIL_FROM, 
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
                    <p>Print and complete it to claim your cash back.</p>
