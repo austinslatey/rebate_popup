@@ -54,7 +54,7 @@ It includes:
 
 ### Email Backend
 - Built with Node.js + Express.
-- Uses SendGrid via Nodemailer for secure emailing.
+- Uses SendGrid’s Web API (via `@sendgrid/mail`) for secure emailing
 - Integrates with Shopify Admin API:
   - Creates new customer with `rebate` tag.
   - If customer already exists, updates their tags instead of failing.
@@ -74,7 +74,7 @@ It includes:
 - Duplicate theme for safe testing (`Online Store > Themes > Actions > Duplicate`).
 - Rebate form PDF uploaded in **Content > Files** (`rebate-form.pdf`).
 - Collection named **superwinch-rebate-2025** with qualifying products.
-- SendGrid account with verified sender identity (e.g., `noreply@example.com`).
+- SendGrid account with a verified sender identity (e.g., `noreply@example.com`) and an API key with **Mail Send** permissions.
 - Private Shopify app (Admin API access token with **read/write customers** scope).
 
 ---
@@ -114,14 +114,13 @@ It includes:
   ```json
   {
     "dependencies": {
+      "@sendgrid/mail": "^8.1.6",
       "cors": "^2.8.5",
       "dotenv": "^17.2.2",
       "express": "^5.1.0",
-      "node-fetch": "^3.3.2",
-      "nodemailer": "^7.0.6"
+      "node-fetch": "^3.3.2"
     }
   }
-  ```
 - Run `npm install` to install these dependencies in your backend project.
 
 ### Deploy Express Server
@@ -138,10 +137,7 @@ It includes:
 ### Environment Variables (.env)
 ```env
 PORT=10000
-SMTP_HOST=smtp.sendgrid.net
-SMTP_PORT=587
-EMAIL_USER=apikey
-EMAIL_PASS=YOUR_SENDGRID_API_KEY
+SENDGRID_API_KEY=your-sendgrid-api-key
 EMAIL_FROM=noreply@example.com
 SHOPIFY_SHOP=your-shop-name.myshopify.com
 SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxx
@@ -174,5 +170,5 @@ SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxx
 ## Notes
 
 - Always test in a duplicate theme before publishing live.
-- Ensure your sender domain (`noreply@example.com`) is verified in SendGrid.
+- Ensure your sender email (noreply@example.com) is verified in SendGrid and that your API key has Mail Send permissions.
 - If using Klaviyo/Shopify Flow, you can enhance follow-up automations for tagged customers.
