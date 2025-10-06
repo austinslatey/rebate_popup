@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import sgMail from "@sendgrid/mail";
 import fetch from "node-fetch";
 
@@ -9,35 +10,20 @@ const app = express();
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Manual CORS middleware for all requests
-app.use((req, res, next) => {
-    const origin = req.get('Origin') || 'unknown';
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from origin: ${origin}`);
-    console.log(`Request headers: ${JSON.stringify(req.headers)}`);
-
-    // Set CORS headers
-    res.set({
-        "Access-Control-Allow-Origin": "https://store.waldoch.com",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Max-Age": "86400", // Cache preflight for 24 hours
-        "X-Custom-CORS-Debug": "Set by server" // Debug header to confirm server response
-    });
-
-    if (req.method === "OPTIONS") {
-        console.log(`[${new Date().toISOString()}] Handling OPTIONS preflight for ${req.path}`);
-        console.log(`Response headers: ${JSON.stringify(res.getHeaders())}`);
-        res.status(204).send();
-        return;
-    }
-
-    next();
-});
+// Use cors middleware with permissive settings (as in older code)
+app.use(cors({
+    origin: "*", // Allow all origins to match older working code
+    methods: ["GET", "POST", "OPTIONS"], // Explicitly include OPTIONS
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false
+}));
 
 app.use(express.json());
 
 app.post("/api/send-rebate", async (req, res) => {
     const { email, pdfUrl } = req.body;
+
+    console.log(`[${new Date().toISOString()}] POST /api/send-rebate from origin: ${req.get('Origin') || 'unknown'}`);
 
     if (!email || !pdfUrl) {
         return res.status(400).json({ error: "Missing email or pdfUrl" });
@@ -51,7 +37,7 @@ app.post("/api/send-rebate", async (req, res) => {
     try {
         const msg = {
             to: email,
-            from: process.env.EMAIL_FROM, 
+            from: process.env.EMAIL_FROM, // Must be a verified sender in SendGrid
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
                    <p>Print and complete it to claim your cash back.</p>
@@ -66,7 +52,7 @@ app.post("/api/send-rebate", async (req, res) => {
         await sgMail.send(msg);
         emailSent = true;
     } catch (err) {
-        console.error("Email sending failed:", err);
+        console.error(`[${new Date().toISOString()}] Email sending failed:`, err);
         if (err.response) {
             console.error("SendGrid error response:", err.response.body);
         }
@@ -134,7 +120,7 @@ app.post("/api/send-rebate", async (req, res) => {
             shopifySuccess = createRes.ok;
         }
     } catch (err) {
-        console.error("Shopify API error:", err);
+        console.error(`[${new Date().toISOString()}] Shopify API error:`, err);
     }
 
     res.json({
@@ -144,21 +130,26 @@ app.post("/api/send-rebate", async (req, res) => {
     });
 });
 
+// Route for quote request
 app.post("/api/quote", async (req, res) => {
     const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
 
+    console.log(`[${new Date().toISOString()}] POST /api/quote from origin: ${req.get('Origin') || 'unknown'}`);
     console.log(`[${new Date().toISOString()}] POST /api/quote payload:`, JSON.stringify(req.body));
 
+    // Validate required fields (variant_id is optional)
     if (!first_name || !last_name || !email || !phone || !product_title) {
         console.log(`[${new Date().toISOString()}] Missing required fields:`, { first_name, last_name, email, phone, product_title });
         return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         console.log(`[${new Date().toISOString()}] Invalid email format: ${email}`);
         return res.status(400).json({ error: "Invalid email format" });
     }
 
+    // Validate phone format (10-15 digits)
     if (!/^[0-9]{10,15}$/.test(phone)) {
         console.log(`[${new Date().toISOString()}] Invalid phone format: ${phone}`);
         return res.status(400).json({ error: "Invalid phone number format" });
@@ -168,6 +159,7 @@ app.post("/api/quote", async (req, res) => {
     let confirmationEmailSent = false;
 
     try {
+        // 1️⃣ Send quote request email to sales team
         const salesMsg = {
             to: process.env.SALES_EMAIL,
             from: process.env.EMAIL_FROM,
@@ -195,6 +187,7 @@ app.post("/api/quote", async (req, res) => {
         await sgMail.send(salesMsg);
         salesEmailSent = true;
 
+        // 2️⃣ Send confirmation email to customer
         const confirmationMsg = {
             to: email,
             from: process.env.EMAIL_FROM,
