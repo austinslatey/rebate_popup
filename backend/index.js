@@ -10,13 +10,29 @@ const app = express();
 // ✅ Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ✅ CORS setup (must come before any routes)
-app.use(cors({
-  origin: "https://store.waldoch.com",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}));
+// ✅ Strong CORS configuration (handles preflight explicitly)
+const allowedOrigins = ["https://store.waldoch.com"];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // 👈 this ensures preflight succeeds
+  }
+  next();
+});
 
 // ✅ Parse JSON body
 app.use(express.json());
@@ -24,7 +40,7 @@ app.use(express.json());
 /* -------------------- SEND REBATE -------------------- */
 app.post("/api/send-rebate", async (req, res) => {
   const { email, pdfUrl } = req.body;
-  console.log(`[${new Date().toISOString()}] POST /api/send-rebate from origin: ${req.get('Origin') || 'unknown'}`);
+  console.log(`[${new Date().toISOString()}] POST /api/send-rebate`);
 
   if (!email || !pdfUrl) {
     return res.status(400).json({ error: "Missing email or pdfUrl" });
@@ -34,7 +50,7 @@ app.post("/api/send-rebate", async (req, res) => {
   let shopifySuccess = false;
   let shopifyData = null;
 
-  // 1️⃣ Send rebate email
+  // Send rebate email
   try {
     await sgMail.send({
       to: email,
@@ -42,8 +58,7 @@ app.post("/api/send-rebate", async (req, res) => {
       subject: "Superwinch Rebate Form",
       html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
              <p>Print and complete it to claim your cash back.</p>
-             <p>Thank you,</p>
-             <p>The Waldoch Team</p>
+             <p>Thank you,<br>The Waldoch Team</p>
              <p style="margin-top:20px; text-align:center;">
                <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png"
                     alt="Waldoch Logo" style="max-width:200px; height:auto;">
@@ -55,7 +70,7 @@ app.post("/api/send-rebate", async (req, res) => {
     if (err.response) console.error("SendGrid error:", err.response.body);
   }
 
-  // 2️⃣ Shopify customer check/create
+  // Shopify customer check/create
   try {
     const checkRes = await fetch(
       `https://${process.env.SHOPIFY_SHOP}/admin/api/2025-07/customers/search.json?query=email:${email}`,
@@ -70,7 +85,9 @@ app.post("/api/send-rebate", async (req, res) => {
 
     if (existing.customers && existing.customers.length > 0) {
       const existingCustomer = existing.customers[0];
-      const currentTags = existingCustomer.tags ? existingCustomer.tags.split(",").map(t => t.trim()) : [];
+      const currentTags = existingCustomer.tags
+        ? existingCustomer.tags.split(",").map((t) => t.trim())
+        : [];
       if (!currentTags.includes("rebate")) {
         const updatedTags = [...currentTags, "rebate"].join(",");
         const updateRes = await fetch(
@@ -123,33 +140,28 @@ app.post("/api/send-rebate", async (req, res) => {
 /* -------------------- REQUEST QUOTE -------------------- */
 app.post("/api/quote", async (req, res) => {
   const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
-  console.log(`[${new Date().toISOString()}] POST /api/quote payload:`, req.body);
+  console.log(`[${new Date().toISOString()}] POST /api/quote`, req.body);
 
   if (!first_name || !last_name || !email || !phone || !product_title) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Invalid email format" });
-  if (!/^[0-9]{10,15}$/.test(phone)) return res.status(400).json({ error: "Invalid phone number format" });
-
-  let salesEmailSent = false;
-  let confirmationEmailSent = false;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return res.status(400).json({ error: "Invalid email format" });
+  if (!/^[0-9]{10,15}$/.test(phone))
+    return res.status(400).json({ error: "Invalid phone number format" });
 
   try {
-    // Sales email
     await sgMail.send({
       to: process.env.SALES_EMAIL,
       from: process.env.EMAIL_FROM,
       subject: `Quote Request for ${product_title}`,
       html: `<h2>New Quote Request</h2>
              <p><strong>Product:</strong> ${product_title}</p>
-             <p><strong>Variant ID:</strong> ${variant_id || 'N/A'}</p>
-             <p><strong>Collection:</strong> ${collection_handle || 'N/A'}</p>
-             <p><strong>Customer:</strong> ${first_name} ${last_name} | ${email} | ${phone}</p>
-             <p>Please follow up with the customer.</p>`,
+             <p><strong>Variant ID:</strong> ${variant_id || "N/A"}</p>
+             <p><strong>Collection:</strong> ${collection_handle || "N/A"}</p>
+             <p><strong>Customer:</strong> ${first_name} ${last_name} | ${email} | ${phone}</p>`,
     });
-    salesEmailSent = true;
 
-    // Confirmation email
     await sgMail.send({
       to: email,
       from: process.env.EMAIL_FROM,
@@ -158,15 +170,15 @@ app.post("/api/quote", async (req, res) => {
              <p>Dear ${first_name} ${last_name},</p>
              <p>We received your request for ${product_title}. Our sales team will contact you soon.</p>`,
     });
-    confirmationEmailSent = true;
 
-    res.json({ message: "Quote request submitted successfully!", salesEmailSent, confirmationEmailSent });
+    res.json({ message: "Quote request submitted successfully!" });
   } catch (err) {
     console.error("Quote email sending failed:", err);
-    res.status(500).json({ error: "Failed to send emails", salesEmailSent, confirmationEmailSent });
+    res.status(500).json({ error: "Failed to send emails" });
   }
 });
 
-
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`[${new Date().toISOString()}] Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`[${new Date().toISOString()}] Server running on port ${PORT}`)
+);
