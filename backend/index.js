@@ -1,6 +1,5 @@
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
 import sgMail from "@sendgrid/mail";
 import fetch from "node-fetch";
 
@@ -10,37 +9,25 @@ const app = express();
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Enhanced CORS middleware configuration
-app.use(cors({
-    origin: "https://store.waldoch.com", // Explicitly allow your Shopify store origin
-    methods: ["GET", "POST", "OPTIONS"], // Include OPTIONS for preflight
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow common headers
-    credentials: false // No credentials needed here
-}));
-
-// Manual CORS header middleware as a fallback (applies to all requests/responses)
+// Manual CORS middleware for all requests
 app.use((req, res, next) => {
+    const origin = req.get('Origin') || '';
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from origin: ${origin}`);
+    console.log(`Request headers: ${JSON.stringify(req.headers)}`);
+
+    // Set CORS headers
     res.header("Access-Control-Allow-Origin", "https://store.waldoch.com");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
 
-    // Log the request for debugging
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from origin: ${req.get('Origin') || 'unknown'}`);
-
     if (req.method === "OPTIONS") {
         console.log(`[${new Date().toISOString()}] Handling OPTIONS preflight for ${req.path}`);
-        res.status(204).end(); // Respond to preflight immediately
+        res.status(204).send();
         return;
     }
 
     next();
-});
-
-// Explicit OPTIONS handler for /api/quote (redundant but ensures coverage)
-app.options("/api/quote", (req, res) => {
-    console.log(`[${new Date().toISOString()}] Explicit OPTIONS for /api/quote`);
-    res.status(204).send();
 });
 
 app.use(express.json());
@@ -162,18 +149,23 @@ app.post("/api/send-rebate", async (req, res) => {
 app.post("/api/quote", async (req, res) => {
     const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
 
-    // Validate required fields (variant_id is now optional)
+    console.log(`[${new Date().toISOString()}] POST /api/quote payload:`, JSON.stringify(req.body));
+
+    // Validate required fields (variant_id is optional)
     if (!first_name || !last_name || !email || !phone || !product_title) {
+        console.log(`[${new Date().toISOString()}] Missing required fields:`, { first_name, last_name, email, phone, product_title });
         return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        console.log(`[${new Date().toISOString()}] Invalid email format: ${email}`);
         return res.status(400).json({ error: "Invalid email format" });
     }
 
     // Validate phone format (10-15 digits)
     if (!/^[0-9]{10,15}$/.test(phone)) {
+        console.log(`[${new Date().toISOString()}] Invalid phone format: ${phone}`);
         return res.status(400).json({ error: "Invalid phone number format" });
     }
 
@@ -205,6 +197,7 @@ app.post("/api/quote", async (req, res) => {
             `,
         };
 
+        console.log(`[${new Date().toISOString()}] Sending sales email to ${process.env.SALES_EMAIL}`);
         await sgMail.send(salesMsg);
         salesEmailSent = true;
 
@@ -229,16 +222,18 @@ app.post("/api/quote", async (req, res) => {
             `,
         };
 
+        console.log(`[${new Date().toISOString()}] Sending confirmation email to ${email}`);
         await sgMail.send(confirmationMsg);
         confirmationEmailSent = true;
 
+        console.log(`[${new Date().toISOString()}] Quote request processed successfully`);
         res.json({
             message: "Quote request submitted successfully!",
             salesEmailSent,
             confirmationEmailSent,
         });
     } catch (err) {
-        console.error("Email sending failed:", err);
+        console.error(`[${new Date().toISOString()}] Email sending failed:`, err);
         if (err.response) {
             console.error("SendGrid error response:", err.response.body);
         }
@@ -251,4 +246,4 @@ app.post("/api/quote", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`[${new Date().toISOString()}] Server running on port ${PORT}`));
