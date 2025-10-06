@@ -11,18 +11,22 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Manual CORS middleware for all requests
 app.use((req, res, next) => {
-    const origin = req.get('Origin') || '';
+    const origin = req.get('Origin') || 'unknown';
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from origin: ${origin}`);
     console.log(`Request headers: ${JSON.stringify(req.headers)}`);
 
     // Set CORS headers
-    res.header("Access-Control-Allow-Origin", "https://store.waldoch.com");
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
+    res.set({
+        "Access-Control-Allow-Origin": "https://store.waldoch.com",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400", // Cache preflight for 24 hours
+        "X-Custom-CORS-Debug": "Set by server" // Debug header to confirm server response
+    });
 
     if (req.method === "OPTIONS") {
         console.log(`[${new Date().toISOString()}] Handling OPTIONS preflight for ${req.path}`);
+        console.log(`Response headers: ${JSON.stringify(res.getHeaders())}`);
         res.status(204).send();
         return;
     }
@@ -47,7 +51,6 @@ app.post("/api/send-rebate", async (req, res) => {
     try {
         const msg = {
             to: email,
-            // Must be a verified sender in SendGrid
             from: process.env.EMAIL_FROM, 
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
@@ -84,11 +87,9 @@ app.post("/api/send-rebate", async (req, res) => {
         const existing = await checkRes.json();
 
         if (existing.customers && existing.customers.length > 0) {
-            // Customer exists → optionally update tags
             const existingCustomer = existing.customers[0];
             console.log("Customer already exists in Shopify:", existingCustomer.id);
 
-            // Optional: Add 'rebate' tag if not present
             const currentTags = existingCustomer.tags ? existingCustomer.tags.split(",").map(t => t.trim()) : [];
             if (!currentTags.includes("rebate")) {
                 const updatedTags = [...currentTags, "rebate"].join(",");
@@ -110,7 +111,6 @@ app.post("/api/send-rebate", async (req, res) => {
                 shopifyData = existingCustomer;
             }
         } else {
-            // Customer does not exist → create new
             const createRes = await fetch(
                 `https://${process.env.SHOPIFY_SHOP}/admin/api/2025-07/customers.json`,
                 {
@@ -137,7 +137,6 @@ app.post("/api/send-rebate", async (req, res) => {
         console.error("Shopify API error:", err);
     }
 
-    // 3️⃣ Respond with status for each step
     res.json({
         emailSent,
         shopifySuccess,
@@ -145,25 +144,21 @@ app.post("/api/send-rebate", async (req, res) => {
     });
 });
 
-// Route for quote request
 app.post("/api/quote", async (req, res) => {
     const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
 
     console.log(`[${new Date().toISOString()}] POST /api/quote payload:`, JSON.stringify(req.body));
 
-    // Validate required fields (variant_id is optional)
     if (!first_name || !last_name || !email || !phone || !product_title) {
         console.log(`[${new Date().toISOString()}] Missing required fields:`, { first_name, last_name, email, phone, product_title });
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         console.log(`[${new Date().toISOString()}] Invalid email format: ${email}`);
         return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // Validate phone format (10-15 digits)
     if (!/^[0-9]{10,15}$/.test(phone)) {
         console.log(`[${new Date().toISOString()}] Invalid phone format: ${phone}`);
         return res.status(400).json({ error: "Invalid phone number format" });
@@ -173,10 +168,9 @@ app.post("/api/quote", async (req, res) => {
     let confirmationEmailSent = false;
 
     try {
-        // 1️⃣ Send quote request email to sales team
         const salesMsg = {
-            to: process.env.SALES_EMAIL, // Sales team email from .env
-            from: process.env.EMAIL_FROM, // Must be a verified sender in SendGrid
+            to: process.env.SALES_EMAIL,
+            from: process.env.EMAIL_FROM,
             subject: `Quote Request for ${product_title}`,
             html: `
                 <h2>New Quote Request</h2>
@@ -201,10 +195,9 @@ app.post("/api/quote", async (req, res) => {
         await sgMail.send(salesMsg);
         salesEmailSent = true;
 
-        // 2️⃣ Send confirmation email to customer
         const confirmationMsg = {
             to: email,
-            from: process.env.EMAIL_FROM, // Must be a verified sender in SendGrid
+            from: process.env.EMAIL_FROM,
             subject: "Your Quote Request Has Been Received",
             html: `
                 <h2>Thank You for Your Quote Request</h2>
