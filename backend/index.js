@@ -40,7 +40,7 @@ app.use(
 );
 
 // ✅ Fix for Render deploy crash
-app.options("*", (req, res) => {
+app.options(/.*/, cors(), (req, res) => {
   res.sendStatus(200);
 });
 
