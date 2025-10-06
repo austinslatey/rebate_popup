@@ -1,40 +1,50 @@
+// server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import sgMail from "@sendgrid/mail";
-import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
 const app = express();
 
 // ✅ Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ✅ Explicitly allow your production site (and localhost for testing)
+// ✅ Explicitly resolve __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ✅ CORS setup (RELIABLE)
 const allowedOrigins = [
-  "https://store.waldoch.com",
-  "http://localhost:3000",
+  "https://store.waldoch.com", // Shopify store (production)
+  "https://waldoch-rebate-popup.onrender.com", // backend itself
+  "http://localhost:3000", // local dev
 ];
 
-// ✅ Use cors() first so Express handles preflight OPTIONS automatically
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.warn("❌ Blocked by CORS:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-// ✅ Parse JSON body
+// ✅ Handle preflight
+app.options("*", cors());
+
+// ✅ Express middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 /* -------------------- SEND REBATE -------------------- */
 app.post("/api/send-rebate", async (req, res) => {
@@ -49,7 +59,7 @@ app.post("/api/send-rebate", async (req, res) => {
   let shopifySuccess = false;
   let shopifyData = null;
 
-  // Send rebate email
+  // ✅ Send rebate email
   try {
     await sgMail.send({
       to: email,
@@ -69,7 +79,7 @@ app.post("/api/send-rebate", async (req, res) => {
     if (err.response) console.error("SendGrid error:", err.response.body);
   }
 
-  // Shopify customer check/create
+  // ✅ Shopify customer check/create
   try {
     const checkRes = await fetch(
       `https://${process.env.SHOPIFY_SHOP}/admin/api/2025-07/customers/search.json?query=email:${email}`,
@@ -186,17 +196,18 @@ app.post("/api/quote", async (req, res) => {
   }
 });
 
-// ✅ Root health check
+// ✅ Health check
 app.get("/", (req, res) => {
-  res.json({ message: "Waldoch rebate popup API running 🚀" });
+  res.json({ message: "🚀 Waldoch rebate popup API running" });
 });
 
-// ✅ Error handling
+// ✅ Global error handler
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err.message);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
+// ✅ Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () =>
   console.log(`[${new Date().toISOString()}] Server running on port ${PORT}`)
