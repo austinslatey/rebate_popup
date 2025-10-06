@@ -10,21 +10,38 @@ const app = express();
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Enhanced CORS configuration
+// Enhanced CORS middleware configuration
 app.use(cors({
     origin: "https://store.waldoch.com", // Explicitly allow your Shopify store origin
-    methods: ["GET", "POST", "OPTIONS"], // Include OPTIONS for preflight requests
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
-    credentials: false // Set to true if you need to send cookies or auth headers
+    methods: ["GET", "POST", "OPTIONS"], // Include OPTIONS for preflight
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow common headers
+    credentials: false // No credentials needed here
 }));
 
-// Handle preflight OPTIONS requests explicitly
-app.options("/api/quote", cors({
-    origin: "https://store.waldoch.com",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: false
-}));
+// Manual CORS header middleware as a fallback (applies to all requests/responses)
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "https://store.waldoch.com");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
+
+    // Log the request for debugging
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from origin: ${req.get('Origin') || 'unknown'}`);
+
+    if (req.method === "OPTIONS") {
+        console.log(`[${new Date().toISOString()}] Handling OPTIONS preflight for ${req.path}`);
+        res.status(204).end(); // Respond to preflight immediately
+        return;
+    }
+
+    next();
+});
+
+// Explicit OPTIONS handler for /api/quote (redundant but ensures coverage)
+app.options("/api/quote", (req, res) => {
+    console.log(`[${new Date().toISOString()}] Explicit OPTIONS for /api/quote`);
+    res.status(204).send();
+});
 
 app.use(express.json());
 
@@ -145,8 +162,8 @@ app.post("/api/send-rebate", async (req, res) => {
 app.post("/api/quote", async (req, res) => {
     const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
 
-    // Validate required fields
-    if (!first_name || !last_name || !email || !phone || !product_title || !variant_id) {
+    // Validate required fields (variant_id is now optional)
+    if (!first_name || !last_name || !email || !phone || !product_title) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -172,7 +189,7 @@ app.post("/api/quote", async (req, res) => {
             html: `
                 <h2>New Quote Request</h2>
                 <p><strong>Product:</strong> ${product_title}</p>
-                <p><strong>Variant ID:</strong> ${variant_id}</p>
+                <p><strong>Variant ID:</strong> ${variant_id || 'N/A'}</p>
                 <p><strong>Collection:</strong> ${collection_handle || 'N/A'}</p>
                 <p><strong>Customer Details:</strong></p>
                 <ul>
