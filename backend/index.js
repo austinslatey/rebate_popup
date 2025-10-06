@@ -39,8 +39,10 @@ app.use(
   })
 );
 
-// ✅ Handle preflight
-app.options("*", cors());
+// ✅ Fix for Render deploy crash
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
 
 // ✅ Express middleware
 app.use(express.json());
