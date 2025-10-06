@@ -10,11 +10,22 @@ const app = express();
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// Enhanced CORS configuration
 app.use(cors({
-    // or restrict to Shopify domain
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: "https://store.waldoch.com", // Explicitly allow your Shopify store origin
+    methods: ["GET", "POST", "OPTIONS"], // Include OPTIONS for preflight requests
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+    credentials: false // Set to true if you need to send cookies or auth headers
 }));
+
+// Handle preflight OPTIONS requests explicitly
+app.options("/api/quote", cors({
+    origin: "https://store.waldoch.com",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false
+}));
+
 app.use(express.json());
 
 app.post("/api/send-rebate", async (req, res) => {
