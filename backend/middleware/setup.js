@@ -15,20 +15,6 @@ export default function setupMiddleware(app) {
     })
   );
 
-  // Explicitly handle preflight OPTIONS requests
-  app.options(
-    "*",
-    cors({
-      origin: [
-        process.env.SHOPIFY_SHOP,
-        process.env.SHOPIFY_SHOP1,
-      ],
-      methods: ["GET", "POST", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-      credentials: true,
-    })
-  );
-
   // Parse JSON bodies
   app.use(express.json());
 }
