@@ -10,20 +10,24 @@ const app = express();
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Use cors middleware with permissive settings (as in older code)
+// Use cors middleware to handle all CORS (including OPTIONS) automatically
 app.use(cors({
-    origin: "*", // Allow all origins to match older working code
-    methods: ["GET", "POST", "OPTIONS"], // Explicitly include OPTIONS
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: "*", // Matches older working code
+    methods: ["GET", "POST"], // cors package handles OPTIONS implicitly
+    allowedHeaders: ["Content-Type"],
     credentials: false
 }));
+
+// Minimal logging
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from origin: ${req.get('Origin') || 'unknown'}`);
+    next();
+});
 
 app.use(express.json());
 
 app.post("/api/send-rebate", async (req, res) => {
     const { email, pdfUrl } = req.body;
-
-    console.log(`[${new Date().toISOString()}] POST /api/send-rebate from origin: ${req.get('Origin') || 'unknown'}`);
 
     if (!email || !pdfUrl) {
         return res.status(400).json({ error: "Missing email or pdfUrl" });
@@ -33,11 +37,10 @@ app.post("/api/send-rebate", async (req, res) => {
     let shopifySuccess = false;
     let shopifyData = null;
 
-    // 1️⃣ Send rebate email using SendGrid
     try {
         const msg = {
             to: email,
-            from: process.env.EMAIL_FROM, // Must be a verified sender in SendGrid
+            from: process.env.EMAIL_FROM,
             subject: "Superwinch Rebate Form",
             html: `<p>Download your rebate form here: <a href="${pdfUrl}">${pdfUrl}</a></p>
                    <p>Print and complete it to claim your cash back.</p>
@@ -58,7 +61,6 @@ app.post("/api/send-rebate", async (req, res) => {
         }
     }
 
-    // 2️⃣ Check if Shopify customer exists
     try {
         const checkRes = await fetch(
             `https://${process.env.SHOPIFY_SHOP}/admin/api/2025-07/customers/search.json?query=email:${email}`,
@@ -130,26 +132,21 @@ app.post("/api/send-rebate", async (req, res) => {
     });
 });
 
-// Route for quote request
 app.post("/api/quote", async (req, res) => {
     const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
 
-    console.log(`[${new Date().toISOString()}] POST /api/quote from origin: ${req.get('Origin') || 'unknown'}`);
     console.log(`[${new Date().toISOString()}] POST /api/quote payload:`, JSON.stringify(req.body));
 
-    // Validate required fields (variant_id is optional)
     if (!first_name || !last_name || !email || !phone || !product_title) {
         console.log(`[${new Date().toISOString()}] Missing required fields:`, { first_name, last_name, email, phone, product_title });
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         console.log(`[${new Date().toISOString()}] Invalid email format: ${email}`);
         return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // Validate phone format (10-15 digits)
     if (!/^[0-9]{10,15}$/.test(phone)) {
         console.log(`[${new Date().toISOString()}] Invalid phone format: ${phone}`);
         return res.status(400).json({ error: "Invalid phone number format" });
@@ -159,7 +156,6 @@ app.post("/api/quote", async (req, res) => {
     let confirmationEmailSent = false;
 
     try {
-        // 1️⃣ Send quote request email to sales team
         const salesMsg = {
             to: process.env.SALES_EMAIL,
             from: process.env.EMAIL_FROM,
@@ -178,7 +174,7 @@ app.post("/api/quote", async (req, res) => {
                 <p>Please follow up with the customer to provide the requested quote.</p>
                 <p style="margin-top:20px; text-align:center;">
                     <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png"
-                         alt="Waldoch Logo" style="max-width:200px; height:auto;">
+                        alt="Waldoch Logo" style="max-width:200px; height:auto;">
                 </p>
             `,
         };
@@ -187,7 +183,6 @@ app.post("/api/quote", async (req, res) => {
         await sgMail.send(salesMsg);
         salesEmailSent = true;
 
-        // 2️⃣ Send confirmation email to customer
         const confirmationMsg = {
             to: email,
             from: process.env.EMAIL_FROM,
@@ -203,7 +198,7 @@ app.post("/api/quote", async (req, res) => {
                 <p>Thank you for choosing Waldoch!</p>
                 <p style="margin-top:20px; text-align:center;">
                     <img src="https://www.waldoch.com/wp-content/uploads/2021/02/logo-wo-w-50th-314-86-1.png"
-                         alt="Waldoch Logo" style="max-width:200px; height:auto;">
+                        alt="Waldoch Logo" style="max-width:200px; height:auto;">
                 </p>
             `,
         };
