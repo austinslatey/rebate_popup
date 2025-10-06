@@ -10,12 +10,16 @@ const app = express();
 // ✅ Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ✅ Global CORS
+// ✅ CORS setup (must come before any routes)
 app.use(cors({
-  origin: "https://store.waldoch.com",
+  origin: "https://store.waldoch.com", // allow only your store domain
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // if you ever send cookies/auth headers
 }));
+
+// ✅ Explicitly handle preflight requests
+app.options("*", cors());
 
 // ✅ Parse JSON body
 app.use(express.json());
