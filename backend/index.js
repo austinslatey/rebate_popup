@@ -39,10 +39,6 @@ app.use(
   })
 );
 
-// ✅ Fix for Render deploy crash
-app.options(/.*/, cors(), (req, res) => {
-  res.sendStatus(200);
-});
 
 // ✅ Express middleware
 app.use(express.json());
