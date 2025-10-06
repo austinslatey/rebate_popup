@@ -10,29 +10,28 @@ const app = express();
 // ✅ Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ✅ Strong CORS configuration (handles preflight explicitly)
-const allowedOrigins = ["https://store.waldoch.com"];
+// ✅ Explicitly allow your production site (and localhost for testing)
+const allowedOrigins = [
+  "https://store.waldoch.com",
+  "http://localhost:3000",
+];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // 👈 this ensures preflight succeeds
-  }
-  next();
-});
+// ✅ Use cors() first so Express handles preflight OPTIONS automatically
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    credentials: true,
+  })
+);
 
 // ✅ Parse JSON body
 app.use(express.json());
@@ -139,7 +138,16 @@ app.post("/api/send-rebate", async (req, res) => {
 
 /* -------------------- REQUEST QUOTE -------------------- */
 app.post("/api/quote", async (req, res) => {
-  const { first_name, last_name, email, phone, product_title, collection_handle, variant_id } = req.body;
+  const {
+    first_name,
+    last_name,
+    email,
+    phone,
+    product_title,
+    collection_handle,
+    variant_id,
+  } = req.body;
+
   console.log(`[${new Date().toISOString()}] POST /api/quote`, req.body);
 
   if (!first_name || !last_name || !email || !phone || !product_title) {
@@ -176,6 +184,17 @@ app.post("/api/quote", async (req, res) => {
     console.error("Quote email sending failed:", err);
     res.status(500).json({ error: "Failed to send emails" });
   }
+});
+
+// ✅ Root health check
+app.get("/", (req, res) => {
+  res.json({ message: "Waldoch rebate popup API running 🚀" });
+});
+
+// ✅ Error handling
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  res.status(500).json({ error: "Internal Server Error" });
 });
 
 const PORT = process.env.PORT || 10000;
